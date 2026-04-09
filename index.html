@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="WizzManual">
+<meta name="theme-color" content="#c9357a">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Wizz Manual Assistant</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600&family=Inter:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --mg:#c9357a;--mgd:#a02860;--bg:#0d0e13;--s1:#13151e;--s2:#1a1d2a;
+  --br:#2a2e42;--tx:#e8eaf2;--mu:#7a7f99;--gn:#43c986;--wn:#f5a623;--rd:#e05555;
+  --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif}
+.shell{display:flex;flex-direction:column;height:100%;padding-top:var(--st)}
+
+/* Topbar */
+.topbar{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--s1);border-bottom:1px solid var(--br);flex-shrink:0}
+.logo{width:34px;height:34px;border-radius:8px;background:var(--mg);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo svg{width:18px;height:18px;fill:white}
+.topbar-title{flex:1;min-width:0}
+.topbar-title h1{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:600;color:white;line-height:1}
+.topbar-title p{font-size:10px;color:var(--mu);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spill{display:flex;align-items:center;gap:5px;background:var(--s2);border:1px solid var(--br);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--mu);flex-shrink:0}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--mu)}
+.dot.on{background:var(--gn)}
+
+/* Tabs */
+.tabs{display:flex;background:var(--s1);border-bottom:1px solid var(--br);flex-shrink:0}
+.tab{flex:1;padding:10px 4px;text-align:center;font-size:12px;color:var(--mu);cursor:pointer;border-bottom:2px solid transparent;font-weight:500;user-select:none}
+.tab.active{color:var(--mg);border-bottom-color:var(--mg)}
+
+/* Pages */
+.pages{flex:1;overflow:hidden;position:relative}
+.page{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;flex-direction:column;gap:12px;padding:14px}
+.page.active{display:flex}
+.chat-page{position:absolute;inset:0;display:none;flex-direction:column}
+.chat-page.active{display:flex}
+
+/* Cards */
+.card{background:var(--s1);border:1px solid var(--br);border-radius:12px;padding:14px}
+.card h3{font-size:13px;font-weight:500;margin-bottom:8px;color:var(--tx)}
+.card p{font-size:12px;color:var(--mu);line-height:1.5}
+.card a{color:var(--mg);text-decoration:none}
+.card.ok{border-color:#1f5c3a}
+.section-label{font-size:11px;color:var(--mu);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px}
+
+/* API key row */
+.key-row{display:flex;gap:8px;margin-top:10px}
+.key-input{flex:1;background:var(--s2);border:1px solid var(--br);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--tx);font-family:'Inter',sans-serif;outline:none;-webkit-appearance:none}
+.key-input:focus{border-color:var(--mg)}
+.key-input::placeholder{color:var(--mu)}
+.btn-primary{background:var(--mg);border:none;border-radius:8px;color:white;font-size:13px;font-weight:500;padding:9px 16px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.key-ok{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gn);margin-top:8px}
+.btn-sm{background:none;border:1px solid var(--br);border-radius:6px;color:var(--mu);font-size:11px;padding:4px 10px;cursor:pointer;margin-left:auto}
+
+/* Provider selector */
+.provider-row{display:flex;gap:8px;margin-top:10px}
+.prov-btn{flex:1;padding:8px;border-radius:8px;border:1px solid var(--br);background:var(--s2);color:var(--mu);font-size:12px;cursor:pointer;font-weight:500;transition:all .15s}
+.prov-btn.active{border-color:var(--mg);color:var(--mg);background:#1a0f18}
+
+/* Add manual button */
+.add-btn{display:flex;align-items:center;gap:10px;background:var(--s1);border:1.5px dashed var(--br);border-radius:12px;padding:12px 14px;cursor:pointer;position:relative;transition:border-color .15s}
+.add-btn:active{border-color:var(--mg);background:#1a0f18}
+.add-btn input{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}
+.add-icon{width:36px;height:36px;border-radius:8px;background:var(--s2);border:1px solid var(--br);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.add-txt p{font-size:13px;font-weight:500;color:var(--tx)}
+.add-txt span{font-size:11px;color:var(--mu)}
+
+/* Manual cards */
+.manual-card{display:flex;align-items:center;gap:10px;background:var(--s1);border:1px solid var(--br);border-radius:12px;padding:12px 14px;cursor:pointer;transition:border-color .15s}
+.manual-card.selected{border-color:var(--mg);background:#150c14}
+.mc-icon{width:38px;height:38px;border-radius:9px;background:var(--s2);border:1px solid var(--br);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.manual-card.selected .mc-icon{background:#2a0f1e;border-color:var(--mgd)}
+.mc-info{flex:1;min-width:0}
+.mc-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mc-meta{font-size:11px;color:var(--mu);margin-top:2px}
+.mc-badge{font-size:10px;padding:3px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.mc-badge.indexed{background:#0a2a1a;color:var(--gn);border:1px solid #1f5c3a}
+.mc-badge.indexing{background:#1e1508;color:var(--wn);border:1px solid #5a3d10}
+.mc-badge.active{background:#2a0f1e;color:var(--mg);border:1px solid var(--mgd)}
+.btn-del{background:none;border:1px solid var(--br);border-radius:6px;color:var(--mu);font-size:12px;padding:4px 8px;cursor:pointer;flex-shrink:0;margin-left:4px}
+
+/* Storage */
+.storage-bar{background:var(--s1);border:1px solid var(--br);border-radius:10px;padding:10px 12px}
+.sb-label{font-size:11px;color:var(--mu);margin-bottom:6px;display:flex;justify-content:space-between}
+.storage-track{background:var(--s2);border-radius:4px;height:4px;overflow:hidden}
+.storage-fill{height:100%;background:var(--mg);border-radius:4px;transition:width .3s}
+
+/* Chat */
+.chat-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;display:flex;flex-direction:column;gap:10px}
+.no-doc{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;color:var(--mu);font-size:13px}
+.no-doc .big{font-size:40px;margin-bottom:12px;opacity:.4}
+.btn-go{margin-top:14px;background:var(--mg);border:none;border-radius:10px;color:white;font-size:14px;font-weight:500;padding:10px 24px;cursor:pointer}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+.chip{background:var(--s1);border:1px solid var(--br);border-radius:20px;padding:6px 12px;font-size:12px;color:var(--mu);cursor:pointer;white-space:nowrap}
+.chip:active{border-color:var(--mg);color:var(--tx);background:#1a0f18}
+
+/* Messages */
+.msg{display:flex;gap:10px;animation:pop .2s ease}
+@keyframes pop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.av{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;font-family:'Rajdhani',sans-serif}
+.msg.user .av{background:var(--s2);border:1px solid var(--br);color:var(--mu)}
+.msg.ai .av{background:var(--mg);color:white}
+.mb{flex:1;min-width:0}
+.mlabel{font-size:10px;color:var(--mu);margin-bottom:4px}
+.msg.user .mc{background:var(--s2);border:1px solid var(--br);border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.5}
+.msg.ai .mc{font-size:14px;line-height:1.7}
+.msg.ai .mc p{margin-bottom:8px}
+.msg.ai .mc p:last-child{margin-bottom:0}
+.msg.ai .mc strong{color:white;font-weight:500}
+.msg.ai .mc ul{padding-left:16px;margin:4px 0}
+.msg.ai .mc li{margin-bottom:3px}
+.src-pages{font-size:10px;color:var(--mu);margin-top:6px;padding-top:6px;border-top:1px solid var(--br)}
+.typing{display:flex;align-items:center;gap:4px;padding:6px 0}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(--mg);animation:pulse 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes pulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+.errmsg{background:#1e0a0a;border:1px solid #5a1f1f;border-radius:8px;padding:10px 12px;font-size:13px;color:var(--rd)}
+
+/* Input bar */
+.inputbar{background:var(--s1);border-top:1px solid var(--br);padding:10px 12px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));flex-shrink:0}
+.input-row{display:flex;align-items:flex-end;gap:8px}
+textarea{flex:1;background:var(--s2);border:1px solid var(--br);border-radius:12px;padding:10px 12px;font-size:15px;color:var(--tx);font-family:'Inter',sans-serif;resize:none;min-height:44px;max-height:110px;outline:none;line-height:1.4;-webkit-appearance:none}
+textarea:focus{border-color:var(--mg)}
+textarea::placeholder{color:var(--mu)}
+.btn-send{width:44px;height:44px;border-radius:12px;background:var(--mg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.btn-send:disabled{opacity:.35;cursor:not-allowed}
+.btn-send svg{width:20px;height:20px;fill:white}
+
+/* Progress overlay */
+.overlay{position:fixed;inset:0;background:rgba(13,14,19,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;gap:12px;padding:24px;text-align:center}
+.ov-title{font-size:15px;font-weight:500;color:var(--tx)}
+.ov-sub{font-size:12px;color:var(--mu);max-width:260px;word-break:break-all}
+.prog-track{width:240px;height:4px;background:var(--s2);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;background:var(--mg);border-radius:4px;transition:width .15s}
+.ov-pct{font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:600;color:var(--mg)}
+
+/* Toast */
+.toast{position:fixed;bottom:calc(80px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--s2);border:1px solid var(--br);border-radius:10px;padding:10px 18px;font-size:13px;color:var(--tx);opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;z-index:300}
+.toast.show{opacity:1}
+
+/* Install banner */
+.install-banner{background:#150c14;border:1px solid var(--mgd);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.ib-text{flex:1;font-size:12px;line-height:1.5}
+.ib-text strong{color:var(--mg);font-weight:500}
+.btn-x2{background:none;border:none;color:var(--mu);font-size:20px;cursor:pointer}
+
+/* Settings */
+.setting-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--br)}
+.setting-row:last-child{border-bottom:none}
+.setting-row label{font-size:13px;color:var(--tx);flex:1}
+.setting-row span{font-size:11px;color:var(--mu)}
+input[type=range]{-webkit-appearance:none;width:120px;height:4px;border-radius:2px;background:var(--s2);outline:none;border:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--mg);cursor:pointer}
+.range-val{font-size:13px;color:var(--mg);font-weight:500;min-width:24px;text-align:right}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="logo">
+      <svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+    </div>
+    <div class="topbar-title">
+      <h1>Wizz Manual Assistant</h1>
+      <p id="activeLabel">Nessun manuale selezionato</p>
+    </div>
+    <div class="spill">
+      <span class="dot on" id="sDot"></span>
+      <span id="sTxt">Pronto</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="lib">📚 Libreria</div>
+    <div class="tab" data-tab="chat">💬 Chat</div>
+    <div class="tab" data-tab="settings">⚙️ Config</div>
+  </div>
+
+  <div class="pages">
+
+    <!-- LIBRERIA -->
+    <div class="page active" id="page-lib">
+
+      <div id="installBanner" class="install-banner" style="display:none">
+        <span style="font-size:20px">📲</span>
+        <div class="ib-text">Installa: tocca <strong>Condividi</strong> → <strong>Aggiungi a schermata Home</strong></div>
+        <button class="btn-x2" onclick="this.parentElement.style.display='none'">×</button>
+      </div>
+
+      <div>
+        <div class="section-label">Aggiungi manuale</div>
+        <div class="add-btn">
+          <input type="file" id="fileInput" accept=".pdf">
+          <div class="add-icon">
+            <svg width="20" height="20" fill="none" stroke="#7a7f99" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+            </svg>
+          </div>
+          <div class="add-txt">
+            <p>Importa e indicizza PDF</p>
+            <span>Il testo viene estratto e salvato sul dispositivo</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">Manuali salvati</div>
+        <div id="manualCards" style="display:flex;flex-direction:column;gap:8px">
+          <div style="color:var(--mu);font-size:13px;padding:16px 0;text-align:center">Nessun manuale salvato</div>
+        </div>
+      </div>
+
+      <div class="storage-bar">
+        <div class="sb-label"><span>Testo indicizzato</span><span id="storageTxt">0 MB</span></div>
+        <div class="storage-track"><div class="storage-fill" id="storageFill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="chat-page" id="page-chat">
+      <div class="chat-scroll" id="chatScroll">
+        <div class="no-doc" id="noDoc">
+          <div class="big">📂</div>
+          <div>Seleziona un manuale dalla libreria</div>
+          <button class="btn-go" onclick="switchTab('lib')">Vai alla libreria</button>
+        </div>
+        <div id="chipsRow" style="display:none"><div class="chips" id="chips"></div></div>
+        <div id="messages" style="display:flex;flex-direction:column;gap:10px;margin-top:4px"></div>
+      </div>
+      <div class="inputbar">
+        <div class="input-row">
+          <textarea id="queryInput" placeholder="Fai una domanda al manuale..." rows="1" disabled></textarea>
+          <button class="btn-send" id="btnSend" disabled>
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+
+      <div>
+        <div class="section-label">Provider AI</div>
+        <div class="card">
+          <div class="provider-row">
+            <button class="prov-btn active" id="provClaude" onclick="setProvider('claude')">Claude (Anthropic)</button>
+            <button class="prov-btn" id="provOpenAI" onclick="setProvider('openai')">GPT-4o (OpenAI)</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">API Key</div>
+        <div class="card" id="keyCard">
+          <p>Inserisci la tua API key. Viene salvata solo sul dispositivo.</p>
+          <div id="keyHint" style="font-size:11px;color:var(--mu);margin-top:6px">
+            Claude: <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys<br>
+            OpenAI: <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a>
+          </div>
+          <div class="key-row">
+            <input class="key-input" id="keyInput" type="password" placeholder="sk-...">
+            <button class="btn-primary" onclick="saveKey()">Salva</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">Parametri ricerca</div>
+        <div class="card">
+          <div class="setting-row">
+            <label>Pagine per risposta</label>
+            <input type="range" min="5" max="20" value="10" id="topKSlider" oninput="updateTopK(this.value)">
+            <span class="range-val" id="topKVal">10</span>
+          </div>
+          <div class="setting-row" style="border:none;padding-bottom:0">
+            <label style="color:var(--mu);font-size:12px">Più pagine = risposte più complete ma più lente</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="border-color:#1f2a3a">
+        <h3 style="color:var(--mu)">Come funziona il RAG</h3>
+        <p style="margin-top:6px">All'importazione, il testo di ogni pagina viene estratto e salvato localmente. Quando fai una domanda, l'app trova le pagine più rilevanti e le manda all'AI — così funziona anche con manuali da 7000 pagine come il FCOM.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Overlay progress -->
+<div class="overlay" id="overlay" style="display:none">
+  <div class="ov-pct" id="ovPct">0%</div>
+  <div class="ov-title" id="ovTitle">Estrazione testo in corso...</div>
+  <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+  <div class="ov-sub" id="ovSub"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.navigator.standalone)
+  document.getElementById('installBanner').style.display='flex';
+
+// ── PDF.js ──
+if(typeof pdfjsLib!=='undefined')
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ── IndexedDB ──
+const DB='WizzRAG2';
+let db;
+function openDB(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open(DB,1);
+    req.onupgradeneeded=e=>{
+      const d=e.target.result;
+      d.createObjectStore('manuals',{keyPath:'id',autoIncrement:true});
+      d.createObjectStore('chunks',{keyPath:'manualId'});
+    };
+    req.onsuccess=e=>{db=e.target.result;res()};
+    req.onerror=()=>rej(req.error);
+  });
+}
+const txs=(store,mode='readonly')=>db.transaction(store,mode).objectStore(store);
+const dbGetAll=s=>new Promise((r,j)=>{const q=txs(s).getAll();q.onsuccess=()=>r(q.result);q.onerror=()=>j()});
+const dbGet=(s,k)=>new Promise((r,j)=>{const q=txs(s).get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>j()});
+const dbAdd=(s,v)=>new Promise((r,j)=>{const q=txs(s,'readwrite').add(v);q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error)});
+const dbPut=(s,v)=>new Promise((r,j)=>{const q=txs(s,'readwrite').put(v);q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error)});
+const dbDel=(s,k)=>new Promise((r,j)=>{const q=txs(s,'readwrite').delete(k);q.onsuccess=()=>r();q.onerror=()=>j()});
+
+// ── Settings ──
+let cfg={provider:'claude',apiKey:'',topK:10};
+function loadCfg(){const s=localStorage.getItem('wz_cfg2');if(s)cfg={...cfg,...JSON.parse(s)}}
+function saveCfg(){localStorage.setItem('wz_cfg2',JSON.stringify(cfg))}
+
+function setProvider(p){
+  cfg.provider=p;saveCfg();
+  document.getElementById('provClaude').classList.toggle('active',p==='claude');
+  document.getElementById('provOpenAI').classList.toggle('active',p==='openai');
+}
+function saveKey(){
+  const v=document.getElementById('keyInput').value.trim();
+  if(!v){toast('Inserisci una API key');return}
+  cfg.apiKey=v;saveCfg();
+  document.getElementById('keyInput').value='';
+  renderKeyCard();
+  toast('✓ API Key salvata');
+}
+function renderKeyCard(){
+  const card=document.getElementById('keyCard');
+  if(cfg.apiKey){
+    const masked='••••••••'+cfg.apiKey.slice(-6);
+    card.innerHTML=`<div class="key-ok"><span>✓ Key configurata (${masked})</span><button class="btn-sm" onclick="clearKey()">Cambia</button></div>`;
+  }
+}
+function clearKey(){
+  cfg.apiKey='';saveCfg();
+  document.getElementById('keyCard').innerHTML=`
+    <p>Inserisci la tua API key. Viene salvata solo sul dispositivo.</p>
+    <div id="keyHint" style="font-size:11px;color:var(--mu);margin-top:6px">
+      Claude: <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys<br>
+      OpenAI: <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a>
+    </div>
+    <div class="key-row">
+      <input class="key-input" id="keyInput" type="password" placeholder="sk-...">
+      <button class="btn-primary" onclick="saveKey()">Salva</button>
+    </div>`;
+}
+function updateTopK(v){cfg.topK=parseInt(v);saveCfg();document.getElementById('topKVal').textContent=v}
+
+// ── Text extraction ──
+async function extractPDF(base64,onProgress){
+  if(typeof pdfjsLib==='undefined') throw new Error('PDF.js non caricato');
+  const binary=atob(base64);
+  const arr=new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++) arr[i]=binary.charCodeAt(i);
+  const pdf=await pdfjsLib.getDocument({data:arr}).promise;
+  const chunks=[];
+  for(let i=1;i<=pdf.numPages;i++){
+    const page=await pdf.getPage(i);
+    const content=await page.getTextContent();
+    const text=content.items.map(it=>it.str).join(' ').replace(/\s+/g,' ').trim();
+    if(text.length>20) chunks.push({page:i,text,tl:text.toLowerCase()});
+    if(onProgress) onProgress(i,pdf.numPages);
+  }
+  return{chunks,total:pdf.numPages};
+}
+
+// ── Search ──
+const STOP=new Set(['the','and','for','are','was','with','this','that','from','have','not','but','they','their','been','will','all','can','more','its','than','then','into','other','some','these','what','about','del','dei','della','delle','degli','che','con','non','una','uno','nel','nella','nei','nelle','gli','sulle','sui','sul','alla','alle','agli','dal','dalla','dai','dalle','per','tra','fra','una','uno','sono','viene','deve','può','ogni','anche','come','quando','dove','questo','questa','questi','queste']);
+function tokenize(t){return t.toLowerCase().replace(/[^a-z0-9àèéìòùü\s]/g,' ').split(/\s+/).filter(w=>w.length>2&&!STOP.has(w))}
+
+function search(query,chunks){
+  const terms=tokenize(query);
+  if(!terms.length) return chunks.slice(0,cfg.topK);
+  const scored=chunks.map(c=>{
+    let score=0;
+    for(const term of terms){
+      let idx=0,t=c.tl;
+      while((idx=t.indexOf(term,idx))!==-1){score++;idx++}
+    }
+    return{page:c.page,text:c.text,score};
+  });
+  return scored.filter(c=>c.score>0).sort((a,b)=>b.score-a.score).slice(0,cfg.topK);
+}
+
+// ── API calls ──
+async function callAPI(systemPrompt,question){
+  if(!cfg.apiKey) throw new Error('API Key non configurata. Vai su Config.');
+  const msgs=[...chatHistory.slice(-8),{role:'user',content:question}];
+  if(cfg.provider==='claude'){
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':cfg.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:systemPrompt,messages:msgs})
+    });
+    const d=await r.json();
+    if(d.error) throw new Error(d.error.message);
+    return(d.content||[]).map(b=>b.text||'').join('');
+  }else{
+    const r=await fetch('https://api.openai.com/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.apiKey},
+      body:JSON.stringify({model:'gpt-4o',max_tokens:2000,messages:[{role:'system',content:systemPrompt},...msgs]})
+    });
+    const d=await r.json();
+    if(d.error) throw new Error(d.error.message);
+    return d.choices[0].message.content;
+  }
+}
+
+// ── State ──
+let activeManual=null,activeChunks=null,isLoading=false;
+const chatHistory=[];
+
+const SIGS={
+  default:['Limiti LVO Cat III','Go-around motore inop','MEL dispatch conditions','ETOPS 180','FDP calculation EASA'],
+  fcom:['CFM LEAP engine parameters','Avionics cooling system','Pressurization auto mode','Fuel crossfeed procedure','ECAM alert actions'],
+  mel:['MEL item attivazione','CDL differences dispatch','Category A/B/C/D limits','Placard requirements'],
+  lvo:['Cat III approach minima','Low visibility taxi','RVR requirements Cat II','LVP crew briefing'],
+  oma:['FDP maximum calculation','Rest period requirements','Fitness for duty policy','Commander authority PIC'],
+  fctm:['Crosswind technique A321','Rejected takeoff decision','Engine failure after V1','TOGA go-around technique'],
+  cwom:['De-icing holdover times','Anti-icing fluid selection','Pre-flight snow/ice check','Cold soak fuel temperature'],
+  ghm:['Pushback standard procedure','Ground handling safety','FOD prevention','Loading supervision'],
+};
+function getSugs(n){
+  n=n.toLowerCase();
+  if(n.includes('fcom'))return SIGS.fcom;if(n.includes('fctm'))return SIGS.fctm;
+  if(n.includes('mel'))return SIGS.mel;if(n.includes('lvo')||n.includes('lvom'))return SIGS.lvo;
+  if(n.includes('om_a')||n.includes('om-a')||n.includes('om_b')||n.includes('om-b'))return SIGS.oma;
+  if(n.includes('cwom'))return SIGS.cwom;if(n.includes('ghm')||n.includes('ground'))return SIGS.ghm;
+  return SIGS.default;
+}
+
+function emoji(n){
+  n=n.toLowerCase();
+  if(n.includes('fcom'))return'✈️';if(n.includes('fctm'))return'🎯';if(n.includes('mel'))return'🔧';
+  if(n.includes('lvo')||n.includes('lvom'))return'🌫️';if(n.includes('om_a')||n.includes('om-a'))return'📋';
+  if(n.includes('om_b')||n.includes('om-b'))return'🗂️';if(n.includes('cwom'))return'❄️';
+  if(n.includes('ghm')||n.includes('ground'))return'🚁';if(n.includes('ccm'))return'👨‍✈️';return'📄';
+}
+function fmtSize(b){return b>1e6?(b/1e6).toFixed(1)+' MB':(b/1e3).toFixed(0)+' KB'}
+const $=id=>document.getElementById(id);
+function setStatus(t,on){$('sTxt').textContent=t;$('sDot').className='dot'+(on?' on':'')}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
+
+// ── Tabs ──
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+name));
+  const cp=$('page-chat');
+  cp.classList.toggle('active',name==='chat');
+  cp.style.display=name==='chat'?'flex':'none';
+}
+
+// ── Import ──
+$('fileInput').addEventListener('change',e=>{if(e.target.files[0])importFile(e.target.files[0])});
+
+async function importFile(file){
+  if(!file.name.endsWith('.pdf')){toast('Solo file PDF');return}
+  const overlay=$('overlay');
+  overlay.style.display='flex';
+  $('ovTitle').textContent='Lettura PDF...';
+  $('ovSub').textContent=file.name;
+  $('ovPct').textContent='0%';
+  $('progFill').style.width='0%';
+
+  try{
+    const b64=await new Promise((res,rej)=>{
+      const r=new FileReader();
+      r.onload=e=>res(e.target.result.split(',')[1]);
+      r.onerror=()=>rej(new Error('Lettura fallita'));
+      r.readAsDataURL(file);
+    });
+
+    $('ovTitle').textContent='Estrazione testo pagine...';
+
+    const {chunks,total}=await extractPDF(b64,(cur,tot)=>{
+      const pct=Math.round(cur/tot*100);
+      $('ovPct').textContent=pct+'%';
+      $('progFill').style.width=pct+'%';
+      $('ovSub').textContent=`Pagina ${cur} di ${tot}`;
+    });
+
+    $('ovTitle').textContent='Salvataggio...';
+    $('progFill').style.width='100%';
+
+    const textSize=chunks.reduce((a,c)=>a+c.text.length,0);
+    const manualId=await dbAdd('manuals',{name:file.name,size:file.size,pageCount:total,chunkCount:chunks.length,textSize,addedAt:Date.now()});
+    await dbPut('chunks',{manualId,chunks});
+
+    setTimeout(()=>{
+      overlay.style.display='none';
+      renderLibrary();
+      toast(`✓ ${chunks.length} pagine indicizzate`);
+    },400);
+  }catch(err){
+    overlay.style.display='none';
+    toast('Errore: '+err.message);
+  }
+}
+
+// ── Library ──
+async function renderLibrary(){
+  const list=await dbGetAll('manuals');
+  const cards=$('manualCards');
+  if(!list.length){
+    cards.innerHTML='<div style="color:var(--mu);font-size:13px;padding:16px 0;text-align:center">Nessun manuale salvato</div>';
+    $('storageTxt').textContent='0 MB';$('storageFill').style.width='0%';return;
+  }
+  cards.innerHTML='';
+  let total=0;
+  list.forEach(m=>{
+    total+=m.textSize||0;
+    const sel=activeManual&&activeManual.id===m.id;
+    const d=document.createElement('div');
+    d.className='manual-card'+(sel?' selected':'');
+    d.innerHTML=`
+      <div class="mc-icon">${emoji(m.name)}</div>
+      <div class="mc-info">
+        <div class="mc-name">${m.name}</div>
+        <div class="mc-meta">${m.chunkCount} pagine indicizzate · ${fmtSize(m.size)}</div>
+      </div>
+      ${sel?'<span class="mc-badge active">Attivo</span>':'<span class="mc-badge indexed">✓ Pronto</span>'}
+      <button class="btn-del" onclick="event.stopPropagation();delManual(${m.id})">✕</button>`;
+    d.addEventListener('click',()=>selectManual(m));
+    cards.appendChild(d);
+  });
+  const mb=total/1e6;
+  $('storageTxt').textContent=mb.toFixed(1)+' MB';
+  $('storageFill').style.width=Math.min(mb/500*100,100)+'%';
+}
+
+async function selectManual(m){
+  setStatus('Caricamento...',false);
+  const rec=await dbGet('chunks',m.id);
+  if(!rec){toast('Errore caricamento chunks');return}
+  activeManual=m;
+  activeChunks=rec.chunks;
+  chatHistory.length=0;
+  $('messages').innerHTML='';
+  $('activeLabel').textContent=m.name.replace(/\.pdf$/i,'');
+  $('queryInput').disabled=false;
+  $('btnSend').disabled=true;
+  $('noDoc').style.display='none';
+  $('chipsRow').style.display='block';
+  renderChips(m.name);
+  setStatus('Pronto',true);
+  renderLibrary();
+  switchTab('chat');
+  addSysMsg(`Manuale attivo: <strong>${m.name}</strong> · ${m.chunkCount} pagine indicizzate. Fai la tua domanda.`);
+  toast('✓ '+m.name.replace(/\.pdf$/i,''));
+}
+
+async function delManual(id){
+  if(activeManual&&activeManual.id===id){
+    activeManual=null;activeChunks=null;
+    $('queryInput').disabled=true;$('btnSend').disabled=true;
+    $('noDoc').style.display='flex';$('chipsRow').style.display='none';
+    $('messages').innerHTML='';chatHistory.length=0;
+    $('activeLabel').textContent='Nessun manuale selezionato';
+    setStatus('Pronto',true);
+  }
+  await dbDel('manuals',id);await dbDel('chunks',id);
+  renderLibrary();toast('Manuale rimosso');
+}
+
+function renderChips(name){
+  $('chips').innerHTML='';
+  getSugs(name).forEach(s=>{
+    const b=document.createElement('button');b.className='chip';b.textContent=s;
+    b.onclick=()=>{$('queryInput').value=s;$('queryInput').dispatchEvent(new Event('input'));$('queryInput').focus()};
+    $('chips').appendChild(b);
+  });
+}
+
+// ── Chat ──
+$('queryInput').addEventListener('input',function(){
+  $('btnSend').disabled=!this.value.trim()||!activeChunks||isLoading;
+  this.style.height='auto';this.style.height=Math.min(this.scrollHeight,110)+'px';
+});
+$('queryInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!$('btnSend').disabled)send()}});
+$('btnSend').addEventListener('click',send);
+
+function addSysMsg(html){
+  const d=document.createElement('div');d.className='msg ai';
+  d.innerHTML=`<div class="av">AI</div><div class="mb"><div class="mlabel">Sistema</div><div class="mc"><p>${html}</p></div></div>`;
+  $('messages').appendChild(d);scroll();
+}
+function addMsg(role,html,pages){
+  const d=document.createElement('div');d.className='msg '+role;
+  if(role==='user'){
+    d.innerHTML=`<div class="av">TU</div><div class="mb"><div class="mlabel">Domanda</div><div class="mc">${html}</div></div>`;
+  }else{
+    const src=pages&&pages.length?`<div class="src-pages">📄 Pagine analizzate: ${pages.join(', ')}</div>`:'';
+    d.innerHTML=`<div class="av">AI</div><div class="mb"><div class="mlabel">Risposta</div><div class="mc">${html}${src}</div></div>`;
+  }
+  $('messages').appendChild(d);scroll();
+}
+function addTyping(){
+  const d=document.createElement('div');d.className='msg ai';d.id='typing';
+  d.innerHTML=`<div class="av">AI</div><div class="mb"><div class="mlabel">Risposta</div><div class="typing"><span></span><span></span><span></span></div></div>`;
+  $('messages').appendChild(d);scroll();return d;
+}
+function scroll(){$('chatScroll').scrollTop=$('chatScroll').scrollHeight}
+function fmt(text){
+  return text.split('\n\n').map(p=>p.trim()).filter(Boolean).map(p=>{
+    if(p.startsWith('- ')||p.includes('\n- ')){
+      return`<ul>${p.split('\n').filter(l=>l.startsWith('- ')).map(l=>`<li>${l.slice(2).replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')}</li>`).join('')}</ul>`;
+    }
+    return`<p>${p.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>')}</p>`;
+  }).join('');
+}
+
+async function send(){
+  if(!activeChunks||isLoading)return;
+  const q=$('queryInput').value.trim();if(!q)return;
+  if(!cfg.apiKey){toast('⚠️ Configura la API Key in Config');switchTab('settings');return}
+  isLoading=true;$('btnSend').disabled=true;
+  $('queryInput').value='';$('queryInput').style.height='auto';
+  addMsg('user',q);
+  const typing=addTyping();
+  setStatus('Ricerca pagine...',false);
+
+  try{
+    const relevant=search(q,activeChunks);
+    const pages=relevant.map(c=>c.page);
+    const context=relevant.length
+      ?relevant.map(c=>`--- Pagina ${c.page} ---\n${c.text}`).join('\n\n')
+      :'[Nessuna sezione rilevante trovata per questa domanda]';
+
+    const systemPrompt=`Sei un assistente esperto di aviazione specializzato nei manuali operativi di Wizz Air Malta.
+Hai accesso a ${relevant.length} pagine estratte dal manuale "${activeManual.name}" (su ${activeManual.chunkCount} pagine totali).
+Rispondi SOLO basandoti sul contesto fornito. Se l'informazione non è presente, dillo chiaramente.
+Cita il numero di pagina quando possibile. Rispondi nella lingua della domanda (italiano o inglese).
+
+CONTESTO RILEVANTE:
+${context}`;
+
+    setStatus('Risposta AI...',false);
+    const answer=await callAPI(systemPrompt,q);
+    typing.remove();
+    chatHistory.push({role:'user',content:q});
+    chatHistory.push({role:'assistant',content:answer});
+    addMsg('ai',fmt(answer),pages);
+    setStatus('Pronto',true);
+  }catch(err){
+    typing.remove();
+    const d=document.createElement('div');d.className='msg ai';
+    d.innerHTML=`<div class="av">AI</div><div class="mb"><div class="errmsg">⚠️ ${err.message}</div></div>`;
+    $('messages').appendChild(d);scroll();
+    setStatus('Errore',false);
+  }
+  isLoading=false;$('queryInput').disabled=false;$('btnSend').disabled=!$('queryInput').value.trim();
+}
+
+// ── Boot ──
+loadCfg();
+document.getElementById('topKSlider').value=cfg.topK;
+document.getElementById('topKVal').textContent=cfg.topK;
+setProvider(cfg.provider);
+renderKeyCard();
+switchTab('lib');
+$('page-chat').style.display='none';
+openDB().then(renderLibrary).catch(e=>toast('DB: '+e.message));
+</script>
+</body>
+</html>
