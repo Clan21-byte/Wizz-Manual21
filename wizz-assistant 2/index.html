@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="WizzManual">
+<meta name="theme-color" content="#c9357a">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Wizz Manual Assistant</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600&family=Inter:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --mg:#c9357a;--mgd:#a02860;--bg:#0d0e13;--s1:#13151e;--s2:#1a1d2a;
+  --br:#2a2e42;--tx:#e8eaf2;--mu:#7a7f99;--gn:#43c986;--wn:#f5a623;--rd:#e05555;
+  --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif}
+.shell{display:flex;flex-direction:column;height:100%;padding-top:var(--st);padding-bottom:var(--sb)}
+.topbar{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--s1);border-bottom:1px solid var(--br);flex-shrink:0}
+.logo{width:34px;height:34px;border-radius:8px;background:var(--mg);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo svg{width:18px;height:18px;fill:white}
+.topbar-title{flex:1;min-width:0}
+.topbar-title h1{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:600;color:white;line-height:1}
+.topbar-title p{font-size:10px;color:var(--mu);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status-pill{display:flex;align-items:center;gap:5px;background:var(--s2);border:1px solid var(--br);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--mu);flex-shrink:0}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--mu)}
+.dot.on{background:var(--gn)}
+.tabs{display:flex;background:var(--s1);border-bottom:1px solid var(--br);flex-shrink:0}
+.tab{flex:1;padding:10px 4px;text-align:center;font-size:12px;color:var(--mu);cursor:pointer;border-bottom:2px solid transparent;font-weight:500}
+.tab.active{color:var(--mg);border-bottom-color:var(--mg)}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.page{display:none;padding:14px;flex-direction:column;gap:12px}
+.page.active{display:flex}
+.section-label{font-size:11px;color:var(--mu);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px}
+.add-btn{display:flex;align-items:center;gap:10px;background:var(--s1);border:1.5px dashed var(--br);border-radius:12px;padding:12px 14px;cursor:pointer;position:relative}
+.add-btn input{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}
+.add-btn .add-icon{width:36px;height:36px;border-radius:8px;background:var(--s2);border:1px solid var(--br);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.add-btn .add-txt p{font-size:13px;font-weight:500;color:var(--tx)}
+.add-btn .add-txt span{font-size:11px;color:var(--mu)}
+.manual-card{display:flex;align-items:center;gap:10px;background:var(--s1);border:1px solid var(--br);border-radius:12px;padding:12px 14px;cursor:pointer}
+.manual-card.selected{border-color:var(--mg);background:#1a0f18}
+.mc-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:var(--s2);border:1px solid var(--br)}
+.manual-card.selected .mc-icon{background:#2a0f1e;border-color:var(--mgd)}
+.mc-info{flex:1;min-width:0}
+.mc-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mc-meta{font-size:11px;color:var(--mu);margin-top:2px}
+.mc-badge{font-size:10px;padding:3px 8px;border-radius:20px;background:#2a0f1e;color:var(--mg);border:1px solid var(--mgd);white-space:nowrap;flex-shrink:0}
+.btn-del{background:none;border:1px solid var(--br);border-radius:6px;color:var(--mu);font-size:12px;padding:4px 8px;cursor:pointer;flex-shrink:0}
+.storage-bar{background:var(--s1);border:1px solid var(--br);border-radius:10px;padding:10px 12px}
+.sb-label{font-size:11px;color:var(--mu);margin-bottom:6px;display:flex;justify-content:space-between}
+.storage-track{background:var(--s2);border-radius:4px;height:4px;overflow:hidden}
+.storage-fill{height:100%;background:var(--mg);border-radius:4px;transition:width .3s}
+.chat-page{display:none;flex-direction:column;height:100%}
+.chat-page.active{display:flex}
+.chat-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;display:flex;flex-direction:column;gap:12px}
+.no-doc{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;color:var(--mu);font-size:13px}
+.no-doc .big{font-size:40px;margin-bottom:12px;opacity:.4}
+.btn-go{margin-top:16px;background:var(--mg);border:none;border-radius:10px;color:white;font-size:14px;font-weight:500;padding:10px 24px;cursor:pointer}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--s1);border:1px solid var(--br);border-radius:20px;padding:6px 12px;font-size:12px;color:var(--mu);cursor:pointer;white-space:nowrap}
+.chip:active{border-color:var(--mg);color:var(--tx);background:#1a0f18}
+.msg{display:flex;gap:10px;animation:pop .25s ease}
+@keyframes pop{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.av{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;font-family:'Rajdhani',sans-serif}
+.msg.user .av{background:var(--s2);border:1px solid var(--br);color:var(--mu)}
+.msg.ai .av{background:var(--mg);color:white}
+.mb{flex:1;min-width:0}
+.mlabel{font-size:10px;color:var(--mu);margin-bottom:4px}
+.msg.user .mc{background:var(--s2);border:1px solid var(--br);border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.5}
+.msg.ai .mc{font-size:14px;line-height:1.7}
+.msg.ai .mc p{margin-bottom:8px}
+.msg.ai .mc p:last-child{margin-bottom:0}
+.msg.ai .mc strong{color:white;font-weight:500}
+.msg.ai .mc ul{padding-left:16px;margin:4px 0}
+.msg.ai .mc li{margin-bottom:3px}
+.typing{display:flex;align-items:center;gap:4px;padding:6px 0}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(--mg);animation:pulse 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes pulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+.errmsg{background:#1e0a0a;border:1px solid #5a1f1f;border-radius:8px;padding:10px 12px;font-size:13px;color:var(--rd)}
+.inputbar{background:var(--s1);border-top:1px solid var(--br);padding:10px 12px;flex-shrink:0}
+.input-row{display:flex;align-items:flex-end;gap:8px}
+textarea{flex:1;background:var(--s2);border:1px solid var(--br);border-radius:12px;padding:10px 12px;font-size:15px;color:var(--tx);font-family:'Inter',sans-serif;resize:none;min-height:44px;max-height:110px;outline:none;line-height:1.4;-webkit-appearance:none}
+textarea:focus{border-color:var(--mg)}
+textarea::placeholder{color:var(--mu)}
+.btn-send{width:44px;height:44px;border-radius:12px;background:var(--mg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.btn-send:disabled{opacity:.4;cursor:not-allowed}
+.btn-send svg{width:20px;height:20px;fill:white}
+.progress-overlay{position:fixed;inset:0;background:rgba(13,14,19,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;gap:14px}
+.po-title{font-size:15px;font-weight:500;color:var(--tx)}
+.po-sub{font-size:12px;color:var(--mu);max-width:260px;text-align:center;word-break:break-all}
+.progress-track{width:220px;height:4px;background:var(--s2);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;background:var(--mg);border-radius:4px;transition:width .2s}
+.toast{position:fixed;bottom:calc(80px + var(--sb));left:50%;transform:translateX(-50%);background:var(--s2);border:1px solid var(--br);border-radius:10px;padding:10px 18px;font-size:13px;color:var(--tx);opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;z-index:200}
+.toast.show{opacity:1}
+.install-banner{background:#1a0f18;border:1px solid var(--mgd);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.ib-text{flex:1;font-size:12px;line-height:1.5}
+.ib-text strong{color:var(--mg);font-weight:500}
+.btn-dismiss{background:none;border:none;color:var(--mu);font-size:20px;cursor:pointer;padding:2px}
+.api-card{background:var(--s1);border:1px solid var(--br);border-radius:12px;padding:14px}
+.api-card.ok{border-color:#1f5c3a}
+.api-card h3{font-size:13px;font-weight:500;margin-bottom:10px;color:var(--tx)}
+.api-card p{font-size:12px;color:var(--mu);line-height:1.5;margin-bottom:10px}
+.api-card a{color:var(--mg);text-decoration:none}
+.key-row{display:flex;gap:8px}
+.key-input{flex:1;background:var(--s2);border:1px solid var(--br);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--tx);font-family:'Inter',sans-serif;outline:none;-webkit-appearance:none}
+.key-input:focus{border-color:var(--mg)}
+.key-input::placeholder{color:var(--mu)}
+.btn-save{background:var(--mg);border:none;border-radius:8px;color:white;font-size:13px;font-weight:500;padding:9px 16px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.key-ok{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gn)}
+.btn-change{background:none;border:1px solid var(--br);border-radius:6px;color:var(--mu);font-size:11px;padding:4px 10px;cursor:pointer;margin-left:auto}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="logo">
+      <svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+    </div>
+    <div class="topbar-title">
+      <h1>Wizz Manual Assistant</h1>
+      <p id="activeManualLabel">Nessun manuale selezionato</p>
+    </div>
+    <div class="status-pill">
+      <span class="dot on" id="statusDot"></span>
+      <span id="statusTxt">Pronto</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="library">📚 Libreria</div>
+    <div class="tab" data-tab="chat">💬 Chat</div>
+  </div>
+
+  <!-- LIBRARY PAGE -->
+  <div class="scroll" id="libScroll">
+    <div class="page active" id="page-library">
+
+      <div id="installBanner" class="install-banner" style="display:none">
+        <span style="font-size:22px">📲</span>
+        <div class="ib-text">Per installare: tocca <strong>Condividi</strong> → <strong>Aggiungi a schermata Home</strong></div>
+        <button class="btn-dismiss" onclick="this.parentElement.style.display='none'">×</button>
+      </div>
+
+      <!-- API Key card -->
+      <div class="api-card" id="apiCard">
+        <h3>🔑 API Key Anthropic</h3>
+        <p>Necessaria per usare l'AI. Prendila gratis su <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys → Create Key.<br>Viene salvata solo sul tuo dispositivo.</p>
+        <div class="key-row">
+          <input class="key-input" id="keyInput" type="password" placeholder="sk-ant-api03-...">
+          <button class="btn-save" onclick="saveKey()">Salva</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">Aggiungi manuale</div>
+        <div class="add-btn">
+          <input type="file" id="fileInput" accept=".pdf">
+          <div class="add-icon">
+            <svg width="20" height="20" fill="none" stroke="#7a7f99" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+            </svg>
+          </div>
+          <div class="add-txt">
+            <p>Importa PDF</p>
+            <span>FCOM · FCTM · OM-A/B · MEL · LVO · CWOM · GHM · CCM</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">Manuali salvati</div>
+        <div id="manualCards" style="display:flex;flex-direction:column;gap:8px">
+          <div style="color:var(--mu);font-size:13px;padding:16px 0;text-align:center">Nessun manuale salvato</div>
+        </div>
+      </div>
+
+      <div class="storage-bar">
+        <div class="sb-label">
+          <span>Spazio utilizzato (dispositivo)</span>
+          <span id="storageTxt">0 MB</span>
+        </div>
+        <div class="storage-track"><div class="storage-fill" id="storageFill" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT PAGE -->
+  <div class="chat-page" id="page-chat">
+    <div class="chat-scroll" id="chatScroll">
+      <div class="no-doc" id="noDoc">
+        <div class="big">📂</div>
+        <div>Seleziona un manuale dalla libreria</div>
+        <button class="btn-go" onclick="switchTab('library')">Vai alla libreria</button>
+      </div>
+      <div id="chipsRow" style="display:none"><div class="chips" id="chips"></div></div>
+      <div id="messages" style="display:flex;flex-direction:column;gap:12px;margin-top:4px"></div>
+    </div>
+
+    <div class="inputbar">
+      <div class="input-row">
+        <textarea id="queryInput" placeholder="Fai una domanda al manuale..." rows="1" disabled></textarea>
+        <button class="btn-send" id="btnSend" disabled>
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="progress-overlay" id="progressOverlay" style="display:none">
+  <div class="po-title" id="progressTitle">Salvataggio in corso...</div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="po-sub" id="progressSub"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+if(isIOS&&!window.navigator.standalone) document.getElementById('installBanner').style.display='flex';
+
+// ── IndexedDB ──
+const DB_NAME='WizzManuals2',STORE='manuals';
+let db;
+function openDB(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open(DB_NAME,1);
+    req.onupgradeneeded=e=>e.target.result.createObjectStore(STORE,{keyPath:'id',autoIncrement:true});
+    req.onsuccess=e=>{db=e.target.result;res()};
+    req.onerror=()=>rej(req.error);
+  });
+}
+const tx=(mode)=>db.transaction(STORE,mode).objectStore(STORE);
+const dbAll=()=>new Promise((r,j)=>{const q=tx('readonly').getAll();q.onsuccess=()=>r(q.result);q.onerror=()=>j()});
+const dbGet=(id)=>new Promise((r,j)=>{const q=tx('readonly').get(id);q.onsuccess=()=>r(q.result);q.onerror=()=>j()});
+const dbAdd=(rec)=>new Promise((r,j)=>{const q=tx('readwrite').add(rec);q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error)});
+const dbDel=(id)=>new Promise((r,j)=>{const q=tx('readwrite').delete(id);q.onsuccess=()=>r();q.onerror=()=>j()});
+
+// ── API Key ──
+let apiKey=localStorage.getItem('wz_apikey')||'';
+
+function renderApiCard(){
+  const card=$('apiCard');
+  if(apiKey){
+    card.className='api-card ok';
+    card.innerHTML=`<h3>🔑 API Key</h3><div class="key-ok"><span>✓ Key configurata</span><button class="btn-change" onclick="resetKey()">Cambia</button></div>`;
+  }
+}
+
+function saveKey(){
+  const v=$('keyInput').value.trim();
+  if(!v.startsWith('sk-')){toast('Key non valida — deve iniziare con sk-');return}
+  apiKey=v;localStorage.setItem('wz_apikey',v);
+  renderApiCard();toast('✓ API Key salvata');
+}
+
+function resetKey(){
+  apiKey='';localStorage.removeItem('wz_apikey');
+  const card=$('apiCard');
+  card.className='api-card';
+  card.innerHTML=`<h3>🔑 API Key Anthropic</h3>
+    <p>Necessaria per usare l'AI. Prendila gratis su <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys → Create Key.<br>Viene salvata solo sul tuo dispositivo.</p>
+    <div class="key-row">
+      <input class="key-input" id="keyInput" type="password" placeholder="sk-ant-api03-...">
+      <button class="btn-save" onclick="saveKey()">Salva</button>
+    </div>`;
+}
+
+// ── State ──
+let activeManual=null,activeData=null,isLoading=false;
+const history=[];
+
+const SIGS={
+  default:['Limiti LVO Cat III','Go-around motore inop','MEL dispatch conditions','ETOPS 180','FDP calculation'],
+  fcom:['CFM engine parameters','Avionics cooling','Pressurization overview','Fuel system','ECAM actions'],
+  mel:['MEL attivazione item','CDL differences','Cat A/B/C/D time limits','Dispatch with item inop'],
+  lvo:['Cat III approach minima','Low vis taxi procedures','RVR requirements','LVP crew procedures'],
+  oma:['FDP calculation rules','Rest requirements EASA','Fitness for duty','Commander authority'],
+  fctm:['Crosswind technique A321','Rejected takeoff V1','Engine failure after T/O','TOGA go-around'],
+  cwom:['De-icing holdover times','Anti-icing fluid types','Snow/ice removal','Cold weather pre-flight'],
+  ghm:['Pushback procedures','Ground handling standards','Loading supervision','FOD prevention'],
+};
+function getSugs(n){
+  n=n.toLowerCase();
+  if(n.includes('fcom'))return SIGS.fcom;
+  if(n.includes('fctm'))return SIGS.fctm;
+  if(n.includes('mel'))return SIGS.mel;
+  if(n.includes('lvo')||n.includes('lvom'))return SIGS.lvo;
+  if(n.includes('om_a')||n.includes('om-a')||n.includes('om_b'))return SIGS.oma;
+  if(n.includes('cwom'))return SIGS.cwom;
+  if(n.includes('ghm')||n.includes('ground'))return SIGS.ghm;
+  return SIGS.default;
+}
+
+// ── UI refs ──
+const $=id=>document.getElementById(id);
+const queryInput=$('queryInput'),btnSend=$('btnSend'),messagesEl=$('messages');
+const chatScroll=$('chatScroll'),noDoc=$('noDoc'),chipsRow=$('chipsRow'),chipsEl=$('chips');
+const statusDot=$('statusDot'),statusTxt=$('statusTxt'),activeManualLabel=$('activeManualLabel');
+const progressOverlay=$('progressOverlay'),progressFill=$('progressFill');
+const progressTitle=$('progressTitle'),progressSub=$('progressSub');
+const storageTxt=$('storageTxt'),storageFill=$('storageFill'),manualCards=$('manualCards');
+
+function setStatus(t,on){statusTxt.textContent=t;statusDot.className='dot'+(on?' on':'')}
+function fmtSize(b){return b>1e6?(b/1e6).toFixed(1)+' MB':(b/1e3).toFixed(0)+' KB'}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
+
+function emoji(n){
+  n=n.toLowerCase();
+  if(n.includes('fcom'))return'✈️';if(n.includes('fctm'))return'🎯';
+  if(n.includes('mel'))return'🔧';if(n.includes('lvo')||n.includes('lvom'))return'🌫️';
+  if(n.includes('om_a')||n.includes('om-a'))return'📋';if(n.includes('om_b')||n.includes('om-b'))return'🗂️';
+  if(n.includes('cwom'))return'❄️';if(n.includes('ghm')||n.includes('ground'))return'🚁';
+  if(n.includes('ccm'))return'👨‍✈️';return'📄';
+}
+
+// ── Tabs ──
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  $('libScroll').style.display=name==='library'?'block':'none';
+  $('page-chat').classList.toggle('active',name==='chat');
+}
+
+// ── Import ──
+$('fileInput').addEventListener('change',e=>{if(e.target.files[0])importFile(e.target.files[0])});
+
+async function importFile(file){
+  if(!file.name.endsWith('.pdf')){toast('Solo file PDF');return}
+  progressOverlay.style.display='flex';
+  progressTitle.textContent='Importazione in corso...';
+  progressSub.textContent=file.name;
+  progressFill.style.width='5%';
+  const reader=new FileReader();
+  reader.onprogress=e=>{if(e.lengthComputable)progressFill.style.width=Math.round(e.loaded/e.total*80)+'%'};
+  reader.onload=async ev=>{
+    progressFill.style.width='90%';
+    progressTitle.textContent='Salvataggio nel dispositivo...';
+    try{
+      const data=ev.target.result.split(',')[1];
+      await dbAdd({name:file.name,size:file.size,data,addedAt:Date.now()});
+      progressFill.style.width='100%';
+      setTimeout(()=>{progressOverlay.style.display='none';renderLibrary();toast('✓ Manuale salvato')},400);
+    }catch(err){progressOverlay.style.display='none';toast('Errore: '+err.message)}
+  };
+  reader.onerror=()=>{progressOverlay.style.display='none';toast('Errore lettura')};
+  reader.readAsDataURL(file);
+}
+
+// ── Library ──
+async function renderLibrary(){
+  const list=await dbAll();
+  if(!list.length){
+    manualCards.innerHTML='<div style="color:var(--mu);font-size:13px;padding:16px 0;text-align:center">Nessun manuale salvato</div>';
+    storageTxt.textContent='0 MB';storageFill.style.width='0%';return;
+  }
+  manualCards.innerHTML='';
+  let total=0;
+  list.forEach(m=>{
+    total+=m.size;
+    const sel=activeManual&&activeManual.id===m.id;
+    const card=document.createElement('div');
+    card.className='manual-card'+(sel?' selected':'');
+    card.innerHTML=`
+      <div class="mc-icon">${emoji(m.name)}</div>
+      <div class="mc-info">
+        <div class="mc-name">${m.name}</div>
+        <div class="mc-meta">${fmtSize(m.size)} · ${new Date(m.addedAt).toLocaleDateString('it-IT')}</div>
+      </div>
+      ${sel?'<span class="mc-badge">Attivo</span>':''}
+      <button class="btn-del" onclick="event.stopPropagation();delManual(${m.id})">✕</button>
+    `;
+    card.addEventListener('click',()=>selectManual(m));
+    manualCards.appendChild(card);
+  });
+  const mb=total/1e6;
+  storageTxt.textContent=mb.toFixed(1)+' MB';
+  storageFill.style.width=Math.min(mb/1000*100,100)+'%';
+}
+
+async function selectManual(m){
+  setStatus('Caricamento...',false);
+  activeManual=m;activeData=null;history.length=0;messagesEl.innerHTML='';
+  const full=await dbGet(m.id);
+  activeData=full.data;
+  activeManualLabel.textContent=m.name.replace(/\.pdf$/i,'');
+  queryInput.disabled=false;btnSend.disabled=true;
+  noDoc.style.display='none';chipsRow.style.display='block';
+  renderChips(m.name);setStatus('Pronto',true);
+  renderLibrary();switchTab('chat');
+  addSysMsg('Manuale attivo: <strong>'+m.name+'</strong> ('+fmtSize(m.size)+'). Fai la tua domanda.');
+  toast('✓ '+m.name.replace(/\.pdf$/i,''));
+}
+
+async function delManual(id){
+  if(activeManual&&activeManual.id===id){
+    activeManual=null;activeData=null;
+    queryInput.disabled=true;btnSend.disabled=true;
+    noDoc.style.display='flex';chipsRow.style.display='none';
+    messagesEl.innerHTML='';history.length=0;
+    activeManualLabel.textContent='Nessun manuale selezionato';
+    setStatus('Pronto',true);
+  }
+  await dbDel(id);renderLibrary();toast('Manuale rimosso');
+}
+
+function renderChips(name){
+  chipsEl.innerHTML='';
+  getSugs(name).forEach(s=>{
+    const b=document.createElement('button');b.className='chip';b.textContent=s;
+    b.onclick=()=>{queryInput.value=s;queryInput.dispatchEvent(new Event('input'));queryInput.focus()};
+    chipsEl.appendChild(b);
+  });
+}
+
+// ── Chat ──
+queryInput.addEventListener('input',()=>{
+  btnSend.disabled=!queryInput.value.trim()||!activeData||isLoading;
+  queryInput.style.height='auto';
+  queryInput.style.height=Math.min(queryInput.scrollHeight,110)+'px';
+});
+queryInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!btnSend.disabled)send()}});
+btnSend.addEventListener('click',send);
+
+function addSysMsg(html){
+  const d=document.createElement('div');d.className='msg ai';
+  d.innerHTML=`<div class="av">AI</div><div class="mb"><div class="mlabel">Sistema</div><div class="mc"><p>${html}</p></div></div>`;
+  messagesEl.appendChild(d);chatScroll.scrollTop=chatScroll.scrollHeight;
+}
+function addMsg(role,html){
+  const d=document.createElement('div');d.className='msg '+role;
+  d.innerHTML=role==='user'
+    ?`<div class="av">TU</div><div class="mb"><div class="mlabel">Domanda</div><div class="mc">${html}</div></div>`
+    :`<div class="av">AI</div><div class="mb"><div class="mlabel">Risposta</div><div class="mc">${html}</div></div>`;
+  messagesEl.appendChild(d);chatScroll.scrollTop=chatScroll.scrollHeight;
+}
+function addTyping(){
+  const d=document.createElement('div');d.className='msg ai';d.id='typing';
+  d.innerHTML=`<div class="av">AI</div><div class="mb"><div class="mlabel">Risposta</div><div class="typing"><span></span><span></span><span></span></div></div>`;
+  messagesEl.appendChild(d);chatScroll.scrollTop=chatScroll.scrollHeight;return d;
+}
+function fmt(text){
+  return text.split('\n\n').map(p=>p.trim()).filter(Boolean).map(p=>{
+    if(p.startsWith('- ')||p.includes('\n- ')){
+      return`<ul>${p.split('\n').filter(l=>l.startsWith('- ')).map(l=>`<li>${l.slice(2).replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')}</li>`).join('')}</ul>`;
+    }
+    return`<p>${p.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>')}</p>`;
+  }).join('');
+}
+
+async function send(){
+  if(!activeData||isLoading)return;
+  if(!apiKey){toast('⚠️ Imposta la API Key nella libreria');switchTab('library');return}
+  const q=queryInput.value.trim();if(!q)return;
+  isLoading=true;btnSend.disabled=true;
+  queryInput.value='';queryInput.style.height='auto';
+  addMsg('user',q);const typing=addTyping();setStatus('Analisi...',false);
+  const recent=history.slice(-6).map(m=>({role:m.role,content:m.content}));
+  history.push({role:'user',content:q});
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{
+        'Content-Type':'application/json',
+        'x-api-key':apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:1000,
+        system:'Sei un assistente esperto di aviazione specializzato nei manuali operativi di Wizz Air Malta. Rispondi SOLO basandoti sul documento PDF fornito. Sii preciso e tecnico. Cita sezioni specifiche quando possibile. Se non trovi l\'informazione nel documento, dillo chiaramente. Rispondi nella lingua della domanda (italiano o inglese).',
+        messages:[...recent,{role:'user',content:[
+          {type:'document',source:{type:'base64',media_type:'application/pdf',data:activeData}},
+          {type:'text',text:q}
+        ]}]
+      })
+    });
+    const data=await resp.json();typing.remove();
+    if(data.error){
+      const d=document.createElement('div');d.className='msg ai';
+      d.innerHTML=`<div class="av">AI</div><div class="mb"><div class="errmsg">Errore API: ${data.error.message}</div></div>`;
+      messagesEl.appendChild(d);setStatus('Errore',false);
+    }else{
+      const text=(data.content||[]).map(b=>b.text||'').join('');
+      history.push({role:'assistant',content:text});
+      addMsg('ai',fmt(text));setStatus('Pronto',true);
+    }
+  }catch(err){
+    typing.remove();
+    const d=document.createElement('div');d.className='msg ai';
+    d.innerHTML=`<div class="av">AI</div><div class="mb"><div class="errmsg">Errore: ${err.message}</div></div>`;
+    messagesEl.appendChild(d);setStatus('Errore',false);
+  }
+  chatScroll.scrollTop=chatScroll.scrollHeight;
+  isLoading=false;queryInput.disabled=false;btnSend.disabled=!queryInput.value.trim();
+}
+
+// ── Boot ──
+switchTab('library');
+renderApiCard();
+openDB().then(renderLibrary).catch(e=>toast('DB error: '+e.message));
+</script>
+</body>
+</html>
